@@ -1,34 +1,46 @@
+const cp = require('child_process');
+const fs = require('fs');
+
 const express = require('express');
-const cors = require('cors'); 
-const { TerraformGenerator, Resource, map, fn } = require('terraform-generator');
+const cors = require('cors');
+const {TerraformGenerator, Resource, map, fn} = require('terraform-generator');
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
 
-const formatName = (name) => {
-  return name.replace(/ /g, '-');
-}
-
+const formatName = (name) => name.replace(/ /g, '-');
 app.post('/generate-terraform', (req, res) => {
-  const { resources } = req.body;
+    const {resources} = req.body;
 
-  const tfg = new TerraformGenerator({
-    required_version: '>= 0.12'
-  });
-  for (const resource of resources) {
-    const name = formatName(resource.terraform.name)
-    const relates = resource.terraform.relates;
-    delete resource.terraform.relates;   
-    tfg.resource(resource.resource, name, resource.terraform);
-    for (var relate_resource_type in relates) {
-      for (const relate_resource of relates[relate_resource_type]) {
-        tfg.resource(relate_resource_type, formatName(relate_resource.name), relate_resource);
-      }
+    const engine = new TerraformGenerator({required_version: '>= 0.12'});
+    resources.forEach((item) => {
+        const {resource, properties} = item;
+        const relates = properties?.relates || {};
+
+        if (!!properties?.relates) {
+            delete properties.relates;
+        }
+
+        engine.resource(resource, formatName(properties.name), properties);
+        Object.entries(relates).forEach(([relate_type, relate_resources]) => {
+            relate_resources.forEach(relate_resource => {
+                engine.resource(relate_type, formatName(relate_resource.name), relate_resource);
+            });
+        });
+    })
+    const output = engine.generate();
+    const cmd = cp.spawnSync('terraform', ['fmt', '-no-color', '-'], {input: output.tf});
+    if (cmd.error) {
+        res.status(500)
+            .header({'Content-Type': 'application/json'})
+            .send({error: cmd.error});
+        return;
     }
-  }
-  res.json(tfg.generate());
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.write(cmd.stdout);
+    res.end();
 });
 
-app.listen(3001, () => console.log('Backend running on port 3001'));
+app.listen(3000, () => console.log('Backend running on port 3000'));
 
