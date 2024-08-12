@@ -1,0 +1,7 @@
+services:
+  be:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./cloudify-terraform:/usr/src/app/cloudify-terraform

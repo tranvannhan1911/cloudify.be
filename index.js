@@ -18,8 +18,8 @@ app.use(cookieParser());
 app.use(express.json());
 
 // constaints
-const ROOT_REPO_PATH = '/home/ubuntu/cloudify-terraform/';
-const VARIABLE_PATH = '/home/ubuntu/cloudify.be/variables.tf';
+const ROOT_REPO_PATH = '/usr/src/app/cloudify-terraform/';
+const VARIABLE_PATH = '/usr/src/app/variables.tf';
 
 const formatName = (name) => name.replace(/ /g, '-');
 app.post('/generate-terraform', (req, res) => {
