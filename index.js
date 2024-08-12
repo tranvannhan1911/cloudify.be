@@ -10,7 +10,10 @@ const cors = require('cors');
 const {TerraformGenerator, Resource, map, fn} = require('terraform-generator');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}));
 app.use(cookieParser());
 app.use(express.json());
 
@@ -157,6 +160,11 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     const cookie = await api.loginAndGetCookie(username, password)
+    const semaphore = cookie.split(";")[0].split("=")[1]
+    res.cookie('semaphore', semaphore, {
+        path: '/',       // Đảm bảo cookie có thể được gửi từ client
+        maxAge: 24 * 60 * 60 * 1000 // Cookie tồn tại trong 24 giờ
+    });
     return res.status(200).json({
         cookie: cookie
     });
