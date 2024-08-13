@@ -11,6 +11,8 @@ RUN apk add --no-cache git
 WORKDIR /usr/src/app
 RUN git config --global --add safe.directory /usr/src/app
 RUN git config --global --add safe.directory /usr/src/app/cloudify-terraform
+# RUN git -C /usr/src/app/cloudify-terraform/ config --global user.email "tranvannhan1911@gmail.com"
+# RUN git -C /usr/src/app/cloudify-terraform/ config --global user.username "tranvannhan1911"
 
 # install dependencies into temp directory
 # this will cache them and speed up future builds
@@ -39,4 +41,4 @@ COPY --from=prerelease /usr/src/app/. .
 # run the app
 USER bun
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "run", "index.js" ]
+ENTRYPOINT [ "./entrypoint.sh" ]

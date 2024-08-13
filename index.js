@@ -54,9 +54,10 @@ app.post('/generate-terraform', (req, res) => {
     res.end();
 });
 
-app.post('/apply-terraform', (req, res) => {
+app.post('/apply-terraform', async (req, res) => {
     const { template_id, inventory_path, terraform } = req.body;
     const semaphore_cookie = req.cookies['semaphore'];
+    console.log("semaphore_cookie", semaphore_cookie)
 
     // Reset to the last commit and remove untracked files
     exec(`git -C ${ROOT_REPO_PATH} reset --hard origin/main && git -C ${ROOT_REPO_PATH} clean -fd`, (err, stdout, stderr) => {
@@ -108,19 +109,20 @@ app.post('/apply-terraform', (req, res) => {
                             }
 
                             // Push the commit to the repository
-                            exec(`git -C ${ROOT_REPO_PATH} push`, (err, stdout, stderr) => {
+                            exec(`git -C ${ROOT_REPO_PATH} push`, async (err, stdout, stderr) => {
                                 if (err) {
                                     console.error('Error pushing changes to repo:', stderr);
                                     return res.status(500).json({ message: 'Failed to push changes to repository' });
                                 }
 
-                                const response = api.runTask({
+                                const response = await api.runTask({
                                     "template_id": template_id,
                                     "params": {
                                         "auto_approve": true
                                     }
                                 }, semaphore_cookie)
-                                return res.status(200).json({ message: 'Terraform configuration applied, variables.tf copied, and pushed to repository', path: inventory_path });
+                                console.log(response)
+                                return res.status(200).json({ ...response, message: 'Terraform configuration applied, variables.tf copied, and pushed to repository', path: inventory_path });
                             });
                         });
                     });

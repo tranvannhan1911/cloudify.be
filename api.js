@@ -36,6 +36,7 @@ async function runTask(data, cookie) {
                 }
             }
         );
+        console.log("response.data", response.data)
         return response.data
     } catch (error) {
         console.error('Error during request:', error.message);
